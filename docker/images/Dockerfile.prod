@@ -1,0 +1,13 @@
+FROM base AS prod
+
+ENV NODE_ENV=production
+
+# Copy necessary scripts and set permissions
+COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
+
+# Webpack compilation
+RUN rosemary webpack:compile
+
+# Add version argument
+ARG VERSION_TAG
+RUN echo $VERSION_TAG > /app/.version

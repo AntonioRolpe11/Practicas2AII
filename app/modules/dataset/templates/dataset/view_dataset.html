@@ -1,0 +1,252 @@
+{% extends "base_template.html" %}
+
+{% set title = dataset.ds_meta_data.title  %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">{{ dataset.ds_meta_data.title }}</li>
+</ol>
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="row">
+
+        <div class="col-12 mb-5">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                    </div>
+
+                    <p class="text-muted mt-2 mb-1">
+                        {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </p>
+
+                    <!-- Autores estilo Zenodo -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                            {% for author in dataset.ds_meta_data.authors %}
+                                <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
+                                <i data-feather="user" class="me-2 text-muted" style="width: 14px; height: 14px;"></i>
+                                <span class="me-2">{{ author.name }}</span>
+
+                                {% if author.affiliation %}
+                                    <span class="badge bg-light text-muted me-2" style="font-size: 0.75rem;">
+                                    {{ author.affiliation }}
+                                    </span>
+                                {% endif %}
+
+                                {% if author.orcid %}
+                                    <a href="https://orcid.org/{{ author.orcid }}"
+                                    target="_blank"
+                                    class="text-success d-flex align-items-center"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="ORCID: {{ author.orcid }}">
+                                    <img src="{{ url_for('static', filename='media/logos/orcid.svg') }}"
+                                        alt="ORCID" class="me-1" width="14" height="14" />
+                                    </a>
+                                {% endif %}
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <p class="card-text">{{ dataset.ds_meta_data.description | safe}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                                <span class="badge bg-secondary">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Zenodo URL -->
+                    <div class="row mt-3 mb-2">
+                        <div class="col-12 d-flex align-items-center flex-wrap">
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                            <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
+                            class="btn btn-light-info btn-sm px-2 py-1 d-inline-flex align-items-center">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>
+                                View Zenodo publication
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if dataset.ds_meta_data.dataset_doi %}
+                    <!-- DOI + Copy icon -->
+                    <div class="row mt-3">
+                        <div class="col-12 d-flex align-items-center flex-wrap">
+                            
+                            <!-- Etiqueta DOI -->
+                            <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
+                            DOI
+                            </span>
+
+                            <!-- Enlace al DOI -->
+                            <a href="{{ dataset.get_uvlhub_doi() }}"
+                            target="_blank"
+                            class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
+                            style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
+                            {{ dataset.get_uvlhub_doi_path() }}
+                            </a>
+
+                            <!-- Copiar DOI -->
+                            <i data-feather="clipboard"
+                            class="center-button-icon"
+                            style="cursor: pointer"
+                            onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
+                            data-bs-toggle="tooltip"
+                            title="Copy DOI">
+                            </i>
+
+                            <!-- Texto oculto para copiar -->
+                            <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
+                            {{ dataset.get_uvlhub_doi() }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card card-flush">
+        <div class="card-header align-items-center py-5 gap-2 gap-md-5">
+            <div class="card-title">
+                <div class="d-flex align-items-center position-relative my-1">
+                    <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    <input type="text" data-kt-ecommerce-product-filter="search" class="form-control form-control-solid w-250px ps-12" placeholder="Search models" />
+                </div>
+            </div>
+            <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
+                <a href="/datasets/download/{{ dataset.id }}" class="btn btn-primary">
+                    <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                                Download dataset ({{ dataset.get_file_total_size_for_human() }})
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body pt-0">
+            <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_models_table">
+                <thead>
+                    <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                        <th class="min-w-200px">Name</th>
+                        <th class="min-w-100px text-end">Size</th>
+                        <th class="min-w-100px text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="fw-semibold text-gray-600">
+                    {% for file in hubfiles %}
+                    <tr>
+                        <td class="font-monospace">
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                                <!-- Dataset sincronizado con DOI -->
+                                <a href="{{ file.get_url() }}" 
+                                class="text-primary text-hover-dark fw-semibold">
+                                    {{ file.name }}
+                                </a>
+                            {% else %}
+                                <!-- Dataset en borrador (sin DOI) -->
+                                <a href="{{ url_for('hubfile.view_unsynchronized_file', dataset_id=dataset.id, file_id=file.id) }}" 
+                                class="text-primary text-hover-dark fw-semibold">
+                                    {{ file.name }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ file.get_formatted_size() }}</td>
+                        <td class="text-end">
+                            <div class="btn-group">
+
+                                <!-- Export dropdown -->
+                                <button type="button" class="btn btn-sm btn-light btn-active-light-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="ki-duotone ki-export fs-5"></i> Export
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=file.id) }}">
+                                            UVL
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=file.id) }}">
+                                            Glencoe
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=file.id) }}">
+                                            DIMACS
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=file.id) }}">
+                                            SPLOT
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <!-- View page link -->
+<a href="{{ file.get_url()}}"
+   class="btn btn-sm btn-light btn-active-light-secondary me-1">
+    <i class="ki-duotone ki-eye fs-5"></i> View
+</a>
+
+
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = $('#kt_models_table').DataTable({
+            pageLength: 10,
+            order: [[1, 'asc']]
+        });
+
+        // Conectar el buscador personalizado
+        const searchInput = document.querySelector('[data-kt-ecommerce-product-filter="search"]');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function () {
+                table.search(this.value).draw();
+            });
+        }
+    });
+
+    function viewFile(fileId) {
+        console.log('View file:', fileId);
+        // Aquí iría el visor/modal
+    }
+</script>
+
+{% endblock %}

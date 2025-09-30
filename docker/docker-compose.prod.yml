@@ -1,0 +1,33 @@
+services:
+
+  web:
+    container_name: web_app_container
+    image: drorganvidez/uvlhub:latest
+    env_file:
+      - ../.env
+    volumes:
+      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
+      - ../scripts:/app/scripts
+      - ../migrations:/app/migrations
+      - ../uploads:/app/uploads
+    command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
+    restart: always
+    depends_on:
+      - db
+      - redis
+      - base
+    networks:
+      - uvlhub_network
+
+  nginx:
+    container_name: nginx_web_server_container
+    image: nginx:1.29.1
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+    restart: always
+    networks:
+      - uvlhub_network

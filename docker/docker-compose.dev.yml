@@ -1,0 +1,33 @@
+services:
+
+  web:
+    container_name: web_app_container
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.dev
+    image: web:latest
+    depends_on:
+      - runtime
+      - db
+      - redis
+    networks:
+      - uvlhub_network
+    env_file:
+      - ../.env
+    volumes:
+      - ../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: [ "bash", "-c", "bash /app/docker/entrypoints/development_entrypoint.sh" ]
+
+  nginx:
+    container_name: nginx_web_server_container
+    image: nginx:1.29.1
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+    restart: always
+    networks:
+      - uvlhub_network
